@@ -29,7 +29,7 @@ def Process_Start_Main(img, out_dir="out", fallback_score=10):
         # --- Board Keypoints via YOLO ---
         if is_json_empty(json_path):
 
-            keypoints = run_yolo_on_image("/opt/models/Board.pt", img, wert=False)
+            keypoints = run_yolo_on_image("/opt/dartvision/models/Board.pt", img, wert=False)
             if len(keypoints) < 4:
                 print("⚠️ Nicht genug Board-Keypoints gefunden – Fallback")
                 return 
@@ -75,7 +75,7 @@ def Process_Start_Main(img, out_dir="out", fallback_score=10):
         cv2.imwrite(OUT_PATH_FILE, warped)
 
         # --- Darts erkennen ---
-        dart_hits_raw = run_yolo_on_image2("/opt/models/Darts.pt", img, wert=False)
+        dart_hits_raw = run_yolo_on_image2("/opt/dartvision/models/Darts.pt", img, wert=False)
         if not dart_hits_raw:
             print("⚠️ Keine Darts gefunden – Fallback")
             return 
