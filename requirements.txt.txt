@@ -1,0 +1,18 @@
+# --- Core Frameworks ---
+flask==3.0.3
+flask-cors==4.0.0
+
+# --- Computer Vision / Deep Learning ---
+ultralytics==8.3.23
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
+torch==2.5.1
+torchvision==0.20.1
+
+# --- Hilfsbibliotheken ---
+requests==2.32.3
+matplotlib==3.9.2
+
+# --- Optional: nur falls du Debug oder Plot brauchst ---
+pillow==10.4.0
+tqdm==4.66.5
