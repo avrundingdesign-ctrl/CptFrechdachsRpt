@@ -22,14 +22,14 @@ def Process_Start_Main(img, out_dir="out", fallback_score=10):
         SIZE = 400
         FLIP_X = False
         ANGLE_CORRECTION = 9
-        json_path= r"UsefulScripts\WichtigeScripts\Aktuell\Versuch4\keys.json"
+        json_path= "/opt/dartvision/jsons/keys.json"
         os.makedirs(out_dir, exist_ok=True)
         OUT_PATH_FILE = os.path.join(out_dir, "result_img.jpg")
 
         # --- Board Keypoints via YOLO ---
         if is_json_empty(json_path):
 
-            keypoints = run_yolo_on_image(r"runs\AktuellBest\Board.pt", img, wert=False)
+            keypoints = run_yolo_on_image("/opt/models/Board.pt", img, wert=False)
             if len(keypoints) < 4:
                 print("⚠️ Nicht genug Board-Keypoints gefunden – Fallback")
                 return 
@@ -75,7 +75,7 @@ def Process_Start_Main(img, out_dir="out", fallback_score=10):
         cv2.imwrite(OUT_PATH_FILE, warped)
 
         # --- Darts erkennen ---
-        dart_hits_raw = run_yolo_on_image2(r"C:\Users\Josi\Documents\DartProgramm\runs\pose\train3\weights\best.pt", img, wert=False)
+        dart_hits_raw = run_yolo_on_image2("/opt/models/Darts.pt", img, wert=False)
         if not dart_hits_raw:
             print("⚠️ Keine Darts gefunden – Fallback")
             return 
@@ -171,4 +171,4 @@ def clear_json(json_path):
     print(f"🧹 JSON-Inhalt geleert: {json_path}")
 
 if __name__ == "__main__":
-    clear_json(json_path= r"/opt/dartvision/jsons/keys.json")
+    clear_json(json_path= "/opt/dartvision/jsons/keys.json")
