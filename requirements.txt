@@ -1,29 +1,20 @@
-# ==========================================
-# DartVision – Flask YOLOv8 Server (CPU)
-# ==========================================
-
 # --- Core Frameworks ---
 flask==3.0.3
 flask-cors==4.0.0
 
 # --- Computer Vision / Deep Learning ---
-ultralytics==8.3.23             # YOLOv8 engine + Pose + Segmentation
-opencv-python-headless==4.10.0.84   # OpenCV ohne GUI (perfekt für Server)
-numpy==1.26.4                   # stabil & kompatibel mit Torch + OpenCV
+ultralytics==8.3.23
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
 
-# --- Torch CPU-Version ---
+# --- Torch CPU-Version (separat mit Index) ---
 torch==2.5.1+cpu
 torchvision==0.20.1+cpu
 torchaudio==2.5.1+cpu
---index-url https://download.pytorch.org/whl/cpu
+-f https://download.pytorch.org/whl/cpu
 
 # --- Hilfsbibliotheken ---
-requests==2.32.3                # HTTP-Requests (z. B. Modell-Downloads)
-matplotlib==3.9.2               # Debug/Visualisierung, falls nötig
-
-# --- Optional (Debug / Bilder / Fortschritt) ---
-pillow==10.4.0                  # Bildverarbeitung (für save/show)
-tqdm==4.66.5                    # Fortschrittsbalken (optional beim YOLO-Training)
-
-# --- (empfohlen für OpenCV) ---
-libglib==3.0.0                  # kein PyPI-Paket – Systemabhängigkeit, Hinweis!
+requests==2.32.3
+matplotlib==3.9.2
+pillow==10.4.0
+tqdm==4.66.5
