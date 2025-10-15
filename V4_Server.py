@@ -8,6 +8,11 @@ app = Flask(__name__)
 
 REF_FILE = "/opt/dartvision/jsons/keys.json"
 
+@app.route("/ping", methods=["GET"])
+def ping():
+    return jsonify({"status": "ok"})
+
+
 @app.route("/upload", methods=["POST"])
 def upload():
     # Prüfen, ob Reset-Flag gesendet wurde
