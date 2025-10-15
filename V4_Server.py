@@ -6,7 +6,7 @@ from V4_Warp_Image_keypoints import Process_Start_Main
 
 app = Flask(__name__)
 
-REF_FILE = r"UsefulScripts\WichtigeScripts\Aktuell\Versuch4\keys.json"
+REF_FILE = "/opt/dartvision/jsons/keys.json"
 
 @app.route("/upload", methods=["POST"])
 def upload():
