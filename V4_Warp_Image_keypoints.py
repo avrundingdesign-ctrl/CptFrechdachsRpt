@@ -171,4 +171,4 @@ def clear_json(json_path):
     print(f"🧹 JSON-Inhalt geleert: {json_path}")
 
 if __name__ == "__main__":
-    clear_json(json_path= r"UsefulScripts\WichtigeScripts\Aktuell\Versuch4\keys.json")
+    clear_json(json_path= r"/opt/dartvision/jsons/keys.json")
