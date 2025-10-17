@@ -67,24 +67,22 @@ def rot90_ccw(x, y, R):
 
 # ------------------ Overlay-Zeichnung ------------------
 def run_simulation(warped_img, out_dir, test_points=None):
-    total_score= 0
     overlay = warped_img.copy()
     sectors = []
+    dart_scores = {}  # 🔹 Hier speichern wir nur die einzelnen Scores
 
-    # Ringe
+    # ------------------ Ringe zeichnen ------------------
     for r_pix in [R_INNER_BULL, R_OUTER_BULL, R_TRIPLE_IN, R_TRIPLE_OUT, R_DOUBLE_IN, R_DOUBLE_OUT]:
         cv2.circle(overlay, CENTER, int(round(r_pix)), (0, 0, 0), 1)
 
-    # Segmente hervorheben (BGR-Farben)
     highlight = {3: (0, 0, 255), 6: (0, 255, 0), 11: (255, 0, 0), 20: (0, 255, 255)}
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     for i, num in enumerate(SECTORS):
-        angle_start = i*18 - 9
-        angle_end   = (i+1)*18 - 9
+        angle_start = i * 18 - 9
+        angle_end = (i + 1) * 18 - 9
         sectors.append({"num": num, "start": angle_start, "end": angle_end})
 
-        # Füllen, falls markiert
         if num in highlight:
             pts = []
             for a in np.linspace(angle_start, angle_end, 30):
@@ -95,35 +93,35 @@ def run_simulation(warped_img, out_dir, test_points=None):
             pts.append([CENTER[0], CENTER[1]])
             cv2.fillPoly(overlay, [np.array(pts, np.int32)], highlight[num])
 
-        # Segment-Grenzlinie
         a_rad = math.radians(angle_start)
         x = int(CENTER[0] + R * math.sin(a_rad))
         y = int(CENTER[1] - R * math.cos(a_rad))
         cv2.line(overlay, CENTER, (x, y), (0, 0, 0), 1)
 
-        # Nummer außen
         a_mid = math.radians((angle_start + angle_end) * 0.5)
         x_txt = int(CENTER[0] + (R + 20) * math.sin(a_mid))
         y_txt = int(CENTER[1] - (R + 20) * math.cos(a_mid))
-        cv2.putText(overlay, str(num), (x_txt - 10, y_txt + 5), font, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-    
-    # Trefferpunkte einzeichnen
+        cv2.putText(overlay, str(num), (x_txt - 10, y_txt + 5),
+                    font, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+    # ------------------ Trefferpunkte ------------------
     if test_points:
         for name, (x, y) in test_points.items():
-
-            x_corr, y_corr = rot90_ccw(x, y, R)
             score = get_score(x, y, sectors)
+            dart_scores[name] = score  # 🔹 Nur hier speichern wir den Wert
             cv2.circle(overlay, (int(x), int(y)), 6, (0, 0, 255), -1)
-            cv2.putText(overlay, f"{score}", (int(x)+10, int(y)), font, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
-            print(f"{name:20s} -> Score = {score}")
-            total_score += score
+            cv2.putText(overlay, f"{score}", (int(x) + 10, int(y)),
+                        font, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
+            print(f"{name:15s} -> Score = {score}")
 
-    # Speichern
+    # ------------------ Overlay speichern ------------------
     out_path = os.path.join(out_dir, "warped_withBoard1.jpg")
     cv2.imwrite(out_path, overlay)
     print("[OK] Overlay gespeichert:", out_path)
 
-    return total_score
+    # 🔹 Nur die Einzelwerte zurückgeben
+    return dart_scores
+
 
 # ------------------ Selbsttest ------------------
 if __name__ == "__main__":
