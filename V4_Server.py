@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from datetime import datetime
 import numpy as np, cv2, json
 from V4_Warp_Image_keypoints import Process_Start_Main
 import os
@@ -57,6 +58,13 @@ def upload():
             return jsonify({"error": "Missing image file"}), 400
 
         file = request.files["file"]
+        upload_folder = "/opt/dartvision/uploads"
+        os.makedirs(upload_folder, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")
+        filename = f"{timestamp}.jpg"
+        save_path = os.path.join(upload_folder, filename)
+        file.save(save_path)
+        print(f"💾 Gespeichert: {save_path}")
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         if img is None:
