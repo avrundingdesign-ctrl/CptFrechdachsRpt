@@ -28,23 +28,7 @@ def upload():
     #return jsonify(fake_response)
     try:
         global np
-        fake_mode = request.args.get("fake") == "1" or os.environ.get("FAKE_MODE") == "1"
-        if fake_mode:
-            print("🧪 FAKE-MODUS aktiv – sende Dummy-Daten")
-            fake_response = {
-                "keypoints": {
-                    "top": [489.4, 472.0],
-                    "right": [961.2, 801.2],
-                    "bottom": [620.1, 1188.1],
-                    "left": [231.9, 924.9]
-                },
-                "darts": [
-                    {"x": 191, "y": 128, "score": 20},
-                    {"x": 309, "y": 177, "score": 13},
-                    {"x": 227, "y": 260, "score": 17}
-                ]
-            }
-            return jsonify(fake_response) 
+
         # ------------------------------------------------
         # 1️⃣ Keypoints vom Client empfangen (optional)
         # ------------------------------------------------
