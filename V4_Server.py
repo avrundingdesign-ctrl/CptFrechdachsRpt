@@ -1,52 +1,147 @@
-import numpy as np
-import os, json, numpy as np, cv2
 from flask import Flask, request, jsonify
+import numpy as np, cv2, json
 from V4_Warp_Image_keypoints import Process_Start_Main
-
-
+import os
 app = Flask(__name__)
 
-REF_FILE = "/opt/dartvision/jsons/keys.json"
-
-@app.route("/ping", methods=["GET"])
-def ping():
-    return jsonify({"status": "ok"})
 
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    # Prüfen, ob Reset-Flag gesendet wurde
-    if "reset" in request.form and request.form["reset"].lower() == "true":
-        if os.path.exists(REF_FILE):
-            os.remove(REF_FILE)
+    print("🧪 Sende direkt Fake-Antwort (kein echtes Processing).")
 
-            return jsonify({"status": "reset_done"})
-        else:
+    #fake_response = {
+        #"keypoints": {
+            #"top": [489.4, 472.0],
+            #"right": [961.2, 801.2],
+           # "bottom": [620.1, 1188.1],
+           # "left": [231.9, 924.9]
+     #   },
+        #"darts": [
+           # {"x": 191, "y": 128, "score": 20},
+            #{"x": 309, "y": 177, "score": 13},
+           # {"x": 227, "y": 260, "score": 17}
+       # ]
+    #}
 
-            return jsonify({"status": "no_ref_file"}), 404
+    #return jsonify(fake_response)
+    try:
+        global np
+        fake_mode = request.args.get("fake") == "1" or os.environ.get("FAKE_MODE") == "1"
+        if fake_mode:
+            print("🧪 FAKE-MODUS aktiv – sende Dummy-Daten")
+            fake_response = {
+                "keypoints": {
+                    "top": [489.4, 472.0],
+                    "right": [961.2, 801.2],
+                    "bottom": [620.1, 1188.1],
+                    "left": [231.9, 924.9]
+                },
+                "darts": [
+                    {"x": 191, "y": 128, "score": 20},
+                    {"x": 309, "y": 177, "score": 13},
+                    {"x": 227, "y": 260, "score": 17}
+                ]
+            }
+            return jsonify(fake_response) 
+        # ------------------------------------------------
+        # 1️⃣ Keypoints vom Client empfangen (optional)
+        # ------------------------------------------------
+        kp_json = request.form.get("keypoints")
+        keypoints = json.loads(kp_json) if kp_json else None
 
-    # Wenn kein Reset, dann normales Bild erwarten
-    if "file" not in request.files:
+        # ------------------------------------------------
+        # 2️⃣ Bild empfangen
+        # ------------------------------------------------
+        if "file" not in request.files:
+            return jsonify({"error": "Missing image file"}), 400
 
-        return jsonify({"error": "no file"}), 400
+        file = request.files["file"]
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        if img is None:
+            return jsonify({"error": "Invalid image"}), 400
 
+        # ------------------------------------------------
+        # 3️⃣ Hauptverarbeitung starten
+        # ------------------------------------------------
+        try:
+            darts, keypoints, dart_scores = Process_Start_Main(img, keypoints=keypoints)
+        except ValueError as e:
+            print(f"❌ Fehler beim Entpacken: {e}")
 
-    file = request.files["file"]
+            # Funktion nochmal aufrufen, um zu sehen, was wirklich zurückkam
+            result = Process_Start_Main(img, keypoints=keypoints)
+            print("🔍 Tatsächliche Rückgabe von Process_Start_Main:", result)
+            if isinstance(result, (list, tuple)):
+                print("📦 Typen:", [type(r) for r in result])
+                print(f"📊 Anzahl Rückgabewerte: {len(result)}")
 
-    # Datei in Bytes umwandeln
-    file_bytes = np.frombuffer(file.read(), np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+                # Fallback, um Absturz zu vermeiden
+                if len(result) == 2:
+                    darts, keypoints = result
+                    dart_scores = {}
+                elif len(result) == 1:
+                    darts = result[0]
+                    keypoints = {}
+                    dart_scores = {}
+                else:
+                    darts, keypoints, dart_scores = [], {}, {}
+            else:
+                print("⚠️ Rückgabewert ist kein Tuple oder List:", type(result))
+                darts, keypoints, dart_scores = [], {}, {}
 
-    # Debug
-    if img is None:
-        print("⚠️ cv2 konnte das Bild nicht dekodieren.")
-        return jsonify({"error": "invalid image"}), 400
+        # ------------------------------------------------
+        # 4️⃣ Finales Dict (Response) zusammenbauen
+        # ------------------------------------------------
+        darts_with_scores = []
 
-    # Haupt-Processing
-    score = Process_Start_Main(img, out_dir="uploads")
+        for i, coords in enumerate(darts, start=1):
+            name = f"Dart {i}"
+            x, y = coords
+            score = dart_scores.get(name, 0)
+            darts_with_scores.append({
+                "x": x,
+                "y": y,
+                "score": score
+            })
 
-    print(f"🏹 Score berechnet: {score}")
-    return jsonify({"score": score})
+        response = {
+            "keypoints": keypoints,
+            "darts": darts_with_scores
+        }
+        import numpy as np
+
+        
+
+        print("🔍 --- Typanalyse der Response ---")
+        describe_types({
+            "keypoints": keypoints,
+            "darts": darts_with_scores
+        })
+        print("🔍 --- Ende der Typanalyse ---")
+        
+        print("server resposne")
+        print(json.dumps(response, indent=2))
+
+        return jsonify(response)
+
+    except Exception as e:
+        print(f"❌ Fehler im Upload: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+def describe_types(obj, name="root", indent=0):
+            prefix = " " * indent
+            if isinstance(obj, dict):
+                print(f"{prefix}🧩 {name} (dict):")
+                for k, v in obj.items():
+                    describe_types(v, name=f"{k}", indent=indent + 2)
+            elif isinstance(obj, list):
+                print(f"{prefix}📜 {name} (list, len={len(obj)}):")
+                for i, v in enumerate(obj[:3]):  # nur die ersten paar anzeigen
+                    describe_types(v, name=f"[{i}]", indent=indent + 2)
+            else:
+                print(f"{prefix}🔹 {name}: {type(obj)} -> {repr(obj)}")
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
