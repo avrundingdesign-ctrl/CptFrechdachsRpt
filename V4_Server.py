@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    print("🧪 Sende direkt Fake-Antwort (kein echtes Processing).")
+    #print("🧪 Sende direkt Fake-Antwort (kein echtes Processing).")
 
     #fake_response = {
         #"keypoints": {
