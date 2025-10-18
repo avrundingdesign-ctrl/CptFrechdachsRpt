@@ -39,19 +39,19 @@ def upload():
         # 2️⃣ Bild empfangen
         # ------------------------------------------------
         if "file" not in request.files:
-            return jsonify({"error": "Missing image file"}), 400
+        return jsonify({"error": "Missing image file"}), 400
 
         file = request.files["file"]
-        upload_folder = "/opt/dartvision/uploads"
-        os.makedirs(upload_folder, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")
-        filename = f"{timestamp}.jpg"
-        save_path = os.path.join(upload_folder, filename)
-        file.save(save_path)
-        print(f"💾 Gespeichert: {save_path}")
-        img = cv2.imread(save_path)
+
+        # 🔹 Datei direkt aus dem Speicher lesen
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+
+        # 🔹 In ein OpenCV-Bild dekodieren
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         if img is None:
             return jsonify({"error": "Invalid image"}), 400
+
+        print(f"📸 Bild empfangen ({len(file_bytes) / 1024:.1f} KB)")
 
         # ------------------------------------------------
         # 3️⃣ Hauptverarbeitung starten
