@@ -39,7 +39,7 @@ def upload():
         # 2️⃣ Bild empfangen
         # ------------------------------------------------
         if "file" not in request.files:
-        return jsonify({"error": "Missing image file"}), 400
+            return jsonify({"error": "Missing image file"}), 400
 
         file = request.files["file"]
 
