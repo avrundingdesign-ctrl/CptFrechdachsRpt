@@ -49,8 +49,7 @@ def upload():
         save_path = os.path.join(upload_folder, filename)
         file.save(save_path)
         print(f"💾 Gespeichert: {save_path}")
-        file_bytes = np.frombuffer(file.read(), np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        img = cv2.imread(save_path)
         if img is None:
             return jsonify({"error": "Invalid image"}), 400
 
