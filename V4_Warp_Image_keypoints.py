@@ -105,4 +105,4 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
 
     except Exception as e:
         print(f"❌ Fehler in Process_Start_Main: {e}")
-        return [], keypoints or None
+        return [], keypoints or None, {}

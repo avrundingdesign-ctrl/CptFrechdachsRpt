@@ -86,15 +86,30 @@ def upload():
         # 4️⃣ Finales Dict (Response) zusammenbauen
         # ------------------------------------------------
         darts_with_scores = []
+        
+        # Sicherstellen, dass dart_scores ein Dictionary ist
+        if dart_scores is None:
+            dart_scores = {}
 
         for i, coords in enumerate(darts, start=1):
             name = f"Dart {i}"
             x, y = coords
-            score = dart_scores.get(name, 0)
+            dart_info = dart_scores.get(name, {})
+            
+            # Unterstützung für alte Format (nur score als Zahl) und neues Format (dict mit score und field_type)
+            if isinstance(dart_info, dict):
+                score = dart_info.get("score", 0)
+                field_type = dart_info.get("field_type", "miss")
+            else:
+                # Fallback für alte Format
+                score = dart_info if isinstance(dart_info, (int, float)) else 0
+                field_type = "miss"
+            
             darts_with_scores.append({
                 "x": x,
                 "y": y,
-                "score": score
+                "score": score,
+                "field_type": field_type
             })
 
         response = {
