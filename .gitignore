@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Model-Dateien (große Dateien, sollten nicht ins Repo)
+models/*.pt
+yolo/*.pt
+*.pt
+*.pth
+*.onnx
+*.pb
+
+# Output-Verzeichnisse
+out/
+outputs/
+*.jpg
+*.png
+*.jpeg
+!README*.png  # README-Bilder können bleiben
+
+# Logs und temporäre Dateien
+*.log
+*.txt
+!requirements.txt
+Boardresults.txt
+
+# JSON-Dateien (außer Konfiguration)
+jsons/*.json
+!jsons/.gitkeep  # Falls du die Struktur behalten willst
+
+# Environment variables
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Flask
+instance/
+.webassets-cache
+

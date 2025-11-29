@@ -150,4 +150,9 @@ def describe_types(obj, name="root", indent=0):
                 print(f"{prefix}🔹 {name}: {type(obj)} -> {repr(obj)}")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    import os
+    # Lokaler Entwicklungsserver
+    if os.getenv("ENV") == "production":
+        app.run(host="0.0.0.0", port=5000, debug=False)
+    else:
+        app.run(host="127.0.0.1", port=5000, debug=True)

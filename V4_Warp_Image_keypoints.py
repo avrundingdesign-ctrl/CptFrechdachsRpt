@@ -26,7 +26,9 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         # ------------------------------------------------------------
         if keypoints is None or len(keypoints) < 4:
             print("⚠️ Keine gültigen Keypoints übergeben – erkenne Board mit YOLO...")
-            detected = run_yolo_on_image("/opt/dartvision/models/Board.pt", img, wert=False)
+            # Lokaler Pfad für Entwicklung, Produktion: /opt/dartvision/models/Board.pt
+            model_path = os.path.join(os.path.dirname(__file__), "models", "Board.pt")
+            detected = run_yolo_on_image(model_path, img, wert=False)
             if len(detected) < 4:
                 print("❌ Nicht genug Board-Keypoints erkannt.")
                 return [], None
@@ -70,8 +72,10 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         # 3️⃣ DARTS erkennen (nur wenn Board-Keypoints existieren)
         # ------------------------------------------------------------
         print("🎯 Starte Dart-Erkennung...")
+        # Lokaler Pfad für Entwicklung, Produktion: /opt/dartvision/models/Darts.pt
+        dart_model_path = os.path.join(os.path.dirname(__file__), "models", "Darts.pt")
         dart_hits_raw = run_yolo_on_image2(
-            "/opt/dartvision/models/Darts.pt",
+            dart_model_path,
             img,
             wert=False
         )
