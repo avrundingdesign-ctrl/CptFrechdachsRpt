@@ -8,7 +8,7 @@ def run_yolo_on_image(model_path, image_path, wert, out_txt="Boardresults.txt", 
     (ohne Confidence) und speichert sie zusätzlich in einer Textdatei.
     """
     model = YOLO(model_path)
-    results = model.predict(source=image_path, imgsz=imgsz, verbose=False, save=True, save_txt=True)
+    results = model.predict(source=image_path, imgsz=imgsz, verbose=False, save=False, save_txt=False)
 
     # hier speichern wir erstmal (cls, (x,y))
     keypoints_with_cls = []
@@ -85,7 +85,7 @@ def run_yolo_on_image2(model_path, image_path,wert, out_txt="Boardresults.txt", 
     (ohne Confidence) und speichert sie zusÃ¤tzlich in einer Textdatei.
     """
     model = YOLO(model_path)
-    results = model.predict(source=image_path, imgsz=imgsz, verbose=False,save=True, save_txt=True)
+    results = model.predict(source=image_path, imgsz=imgsz, verbose=False,save=False, save_txt=False)
 
     keypoints_all = []
 

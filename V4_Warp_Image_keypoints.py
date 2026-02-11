@@ -68,12 +68,17 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         H, _ = cv2.findHomography(src_pts, dst_rot)
         warped = cv2.warpPerspective(img, H, (SIZE, SIZE))
 
+        # 📁 Transformiertes Bild speichern
+        warped_path = os.path.join(out_dir, "warped_input.jpg")
+        cv2.imwrite(warped_path, warped)
+        print(f"💾 Transformiertes Bild gespeichert: {warped_path}")
+
         # ------------------------------------------------------------
         # 3️⃣ DARTS erkennen (nur wenn Board-Keypoints existieren)
         # ------------------------------------------------------------
         print("🎯 Starte Dart-Erkennung...")
         # Lokaler Pfad für Entwicklung, Produktion: /opt/dartvision/models/Darts.pt
-        dart_model_path = os.path.join(os.path.dirname(__file__), "models", "Darts.pt")
+        dart_model_path = os.path.join(os.path.dirname(__file__), "models", "Yolo26Darts_70.pt")
         dart_hits_raw = run_yolo_on_image2(
             dart_model_path,
             img,
