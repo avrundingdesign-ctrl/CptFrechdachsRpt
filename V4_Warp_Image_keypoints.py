@@ -3,14 +3,16 @@ from V4_SimulateBoardOnWarpedImageKey import run_simulation
 from V4_Extract_DartCenters import transform_dart_keypoints_absolute
 from V4_YOLODartKoordinates import run_yolo_on_image, run_yolo_on_image2
 
-def Process_Start_Main(img, keypoints=None, out_dir="out"):
+def Process_Start_Main(img, keypoints=None, out_dir="out", board_model=None, dart_model=None):
     """
     Stateless Verarbeitung:
+    - board_model / dart_model: Vorab geladene YOLO-Modelle (werden vom Server übergeben).
     - Wenn keine Keypoints: Board wird automatisch erkannt.
     - Wenn Keypoints vorhanden: wird direkt die Dart-Erkennung gestartet.
     Rückgabe:
         darts: Liste [(x, y), ...]
         keypoints: {top, right, bottom, left}
+        dart_scores: dict
     """
 
     try:
@@ -26,9 +28,7 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         # ------------------------------------------------------------
         if keypoints is None or len(keypoints) < 4:
             print("⚠️ Keine gültigen Keypoints übergeben – erkenne Board mit YOLO...")
-            # Lokaler Pfad für Entwicklung, Produktion: /opt/dartvision/models/Board.pt
-            model_path = os.path.join(os.path.dirname(__file__), "models", "Board.pt")
-            detected = run_yolo_on_image(model_path, img, wert=False)
+            detected = run_yolo_on_image(board_model, img, wert=False)
             if len(detected) < 4:
                 print("❌ Nicht genug Board-Keypoints erkannt.")
                 return [], None
@@ -77,10 +77,8 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         # 3️⃣ DARTS erkennen (nur wenn Board-Keypoints existieren)
         # ------------------------------------------------------------
         print("🎯 Starte Dart-Erkennung...")
-        # Lokaler Pfad für Entwicklung, Produktion: /opt/dartvision/models/Darts.pt
-        dart_model_path = os.path.join(os.path.dirname(__file__), "models", "Yolo26Darts_70.pt")
         dart_hits_raw = run_yolo_on_image2(
-            dart_model_path,
+            dart_model,
             img,
             wert=False
         )

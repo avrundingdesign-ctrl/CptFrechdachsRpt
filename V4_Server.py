@@ -2,23 +2,41 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import numpy as np, cv2, json
 from V4_Warp_Image_keypoints import Process_Start_Main
+from V4_YOLODartKoordinates import load_model
 import os
-import random
+
 app = Flask(__name__)
+
+# ============================================
+# 🚀 MODELLE EINMALIG BEIM START LADEN
+# ============================================
+BASE_DIR = os.path.dirname(__file__)
+BOARD_MODEL = load_model(os.path.join(BASE_DIR, "models", "Board.pt"))
+DART_MODEL = load_model(os.path.join(BASE_DIR, "models", "Yolo26Darts_70.pt"))
+print("✅ Alle Modelle geladen.")
+
+# Globaler Error Handler: Gibt immer JSON zurück
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found", "status": 404}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error", "status": 500}), 500
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    return jsonify({"error": str(error), "status": 500}), 500
 
 # ============================================
 # 🎭 FAKE MODE CONFIGURATION
 # ============================================
 # Setze FAKE_MODE = True, um Bilderkennung zu umgehen
 # und vordefinierte Werte zurückzugeben
-FAKE_MODE = True
-
-x = random.randint(300,900),
-y = random.randint(300, 900),
+FAKE_MODE = False
 
 # Vordefinierte Fake-Antworten (kannst du hier anpassen)
 FAKE_RESPONSES = {
-
     "triple_20": {
         "keypoints": {
             "top": [489.4, 472.0],
@@ -53,11 +71,11 @@ FAKE_RESPONSES = {
         },
         "darts": [
             {"x": 640, "y": 360, "score": 20, "field_type": "single"},
-           # {"x": 720, "y": 450, "score": 18, "field_type": "double"},
-           # {"x": 560, "y": 500, "score": 15, "field_type": "triple"}
+            {"x": 720, "y": 450, "score": 18, "field_type": "double"},
+            {"x": 560, "y": 500, "score": 15, "field_type": "triple"}
         ]
     },
-    "single_dart_random": {
+    "single_dart": {
         "keypoints": {
             "top": [489.4, 472.0],
             "right": [961.2, 801.2],
@@ -65,18 +83,7 @@ FAKE_RESPONSES = {
             "left": [231.9, 924.9]
         },
         "darts": [
-            {"x": x, "y": y, "score": 19, "field_type": "single"}
-        ]
-    },
-        "single_dart": {
-        "keypoints": {
-            "top": [489.4, 472.0],
-            "right": [961.2, 801.2],
-            "bottom": [620.1, 1188.1],
-            "left": [231.9, 924.9]
-        },
-        "darts": [
-            {"x": 30, "y": 70, "score": 40, "field_type": "tripple"}
+            {"x": 700, "y": 400, "score": 17, "field_type": "single"}
         ]
     },
     "no_darts": {
@@ -92,11 +99,26 @@ FAKE_RESPONSES = {
 
 # Wähle hier, welche Fake-Antwort zurückgegeben wird
 # Optionen: "triple_20", "bullseye", "mixed", "single_dart", "no_darts"
-ACTIVE_FAKE_RESPONSE = "single_dart"
+ACTIVE_FAKE_RESPONSE = "triple_20"
+
+
+@app.route("/", methods=["GET"])
+def index():
+    """Einfacher Health-Check Endpoint"""
+    return jsonify({
+        "status": "online",
+        "service": "DartVision API",
+        "endpoints": {
+            "upload": "/upload (POST)"
+        }
+    })
 
 
 @app.route("/upload", methods=["POST"])
 def upload():
+    print(f"📨 Anfrage empfangen: {request.method} {request.path}")
+    print(f"📋 Content-Type: {request.content_type}")
+    
     # ============================================
     # 🎭 FAKE MODE: Sende vordefinierte Antwort
     # ============================================
@@ -136,18 +158,11 @@ def upload():
 
         print(f"📸 Bild empfangen ({len(file_bytes) / 1024:.1f} KB)")
 
-        # 📁 Original-Bild speichern
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        os.makedirs("uploads", exist_ok=True)
-        original_path = f"uploads/original_{timestamp}.jpg"
-        cv2.imwrite(original_path, img)
-        print(f"💾 Original-Bild gespeichert: {original_path}")
-
         # ------------------------------------------------
         # 3️⃣ Hauptverarbeitung starten
         # ------------------------------------------------
         try:
-            darts, keypoints, dart_scores = Process_Start_Main(img, keypoints=keypoints)
+            darts, keypoints, dart_scores = Process_Start_Main(img, keypoints=keypoints, board_model=BOARD_MODEL, dart_model=DART_MODEL)
         except ValueError as e:
             print(f"❌ Fehler beim Entpacken: {e}")
 

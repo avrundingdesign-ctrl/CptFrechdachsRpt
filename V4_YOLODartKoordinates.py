@@ -1,13 +1,18 @@
 from ultralytics import YOLO
 import numpy as np
 
+def load_model(model_path):
+    """Lädt ein YOLO-Modell einmalig und gibt es zurück."""
+    print(f"📦 Lade YOLO-Modell: {model_path}")
+    return YOLO(model_path)
+
 # mit wert kann man umschalten zwischen dem DartTraining und dem BoardTraining, bzw bisher vorher festgelegt da best.pt schlechte ergebnisse liefert
-def run_yolo_on_image(model_path, image_path, wert, out_txt="Boardresults.txt", imgsz=800):
+def run_yolo_on_image(model, image_path, wert, out_txt="Boardresults.txt", imgsz=800):
     """
     Führt YOLO-Inferenz auf einem Bild aus, gibt ALLE Keypoints als flache Liste zurück
     (ohne Confidence) und speichert sie zusätzlich in einer Textdatei.
+    model = bereits geladenes YOLO-Modell (kein Pfad mehr!)
     """
-    model = YOLO(model_path)
     results = model.predict(source=image_path, imgsz=imgsz, verbose=False, save=False, save_txt=False)
 
     # hier speichern wir erstmal (cls, (x,y))
@@ -78,13 +83,13 @@ def sort_by_class(points_with_cls):
             ordered[cls_id] = (x, y)
     return ordered
 
-def run_yolo_on_image2(model_path, image_path,wert, out_txt="Boardresults.txt", imgsz=800):
+def run_yolo_on_image2(model, image_path,wert, out_txt="Boardresults.txt", imgsz=800):
     
     """
-    FÃ¼hrt YOLO-Inferenz auf einem Bild aus, gibt ALLE Keypoints als flache Liste zurÃ¼ck
-    (ohne Confidence) und speichert sie zusÃ¤tzlich in einer Textdatei.
+    Führt YOLO-Inferenz auf einem Bild aus, gibt ALLE Keypoints als flache Liste zurück
+    (ohne Confidence) und speichert sie zusätzlich in einer Textdatei.
+    model = bereits geladenes YOLO-Modell (kein Pfad mehr!)
     """
-    model = YOLO(model_path)
     results = model.predict(source=image_path, imgsz=imgsz, verbose=False,save=False, save_txt=False)
 
     keypoints_all = []
