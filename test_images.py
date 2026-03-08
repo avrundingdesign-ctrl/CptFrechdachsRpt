@@ -54,14 +54,22 @@ def test_image(image_path):
     
     # Verarbeite Bild
     try:
-        darts, keypoints, dart_scores = Process_Start_Main(img, keypoints=None)
+        result = Process_Start_Main(img, keypoints=None)
+
+        if isinstance(result, (list, tuple)) and len(result) == 4:
+            darts, keypoints, dart_scores, detection_confidences = result
+        else:
+            darts, keypoints, dart_scores = result
+            detection_confidences = {"board": {}, "darts": []}
         
         # Erstelle Response-Format wie im Server
         darts_with_scores = []
+        dart_confidences = detection_confidences.get("darts", [])
         for i, coords in enumerate(darts, start=1):
             name = f"Dart {i}"
             x, y = coords
             dart_info = dart_scores.get(name, {})
+            confidence = dart_confidences[i - 1] if i - 1 < len(dart_confidences) else None
             
             if isinstance(dart_info, dict):
                 score = dart_info.get("score", 0)
@@ -74,11 +82,13 @@ def test_image(image_path):
                 "x": int(x),
                 "y": int(y),
                 "score": score,
-                "field_type": field_type
+                "field_type": field_type,
+                "confidence": confidence
             })
         
         result = {
             "keypoints": keypoints,
+            "keypoint_confidences": detection_confidences.get("board", {}),
             "darts": darts_with_scores
         }
         

@@ -13,6 +13,7 @@ def Process_Start_Main(img, keypoints=None, out_dir="out", board_model=None, dar
         darts: Liste [(x, y), ...]
         keypoints: {top, right, bottom, left}
         dart_scores: dict
+        detection_confidences: {board: {...}, darts: [...]}
     """
 
     try:
@@ -26,18 +27,26 @@ def Process_Start_Main(img, keypoints=None, out_dir="out", board_model=None, dar
         # ------------------------------------------------------------
         # 1️⃣ KEYPOINTS prüfen
         # ------------------------------------------------------------
+        board_confidences = {}
+
         if keypoints is None or len(keypoints) < 4:
             print("⚠️ Keine gültigen Keypoints übergeben – erkenne Board mit YOLO...")
-            detected = run_yolo_on_image(board_model, img, wert=False)
+            detected, detected_confidences = run_yolo_on_image(board_model, img, wert=False)
             if len(detected) < 4:
                 print("❌ Nicht genug Board-Keypoints erkannt.")
-                return [], None
+                return [], None, {}, {"board": {}, "darts": []}
 
             keypoints = {
                 "top": detected[0],
                 "right": detected[1],
                 "bottom": detected[2],
                 "left": detected[3]
+            }
+            board_confidences = {
+                "top": detected_confidences[0],
+                "right": detected_confidences[1],
+                "bottom": detected_confidences[2],
+                "left": detected_confidences[3]
             }
             print("🟢 Board-Keypoints neu erkannt.")
         else:
@@ -85,13 +94,16 @@ def Process_Start_Main(img, keypoints=None, out_dir="out", board_model=None, dar
 
         if not dart_hits_raw:
             print("⚠️ Keine Darts erkannt.")
-            return [], keypoints, {}
+            return [], keypoints, {}, {"board": board_confidences, "darts": []}
+
+        dart_points_raw = [(x, y) for x, y, _ in dart_hits_raw]
+        dart_confidences = [confidence for _, _, confidence in dart_hits_raw]
 
         # ------------------------------------------------------------
         # 4️⃣ DART-Koordinaten transformieren
         # ------------------------------------------------------------
         dart_hits = transform_dart_keypoints_absolute(
-            dart_hits_raw, H, M, SIZE=SIZE, FLIP_X=FLIP_X
+            dart_points_raw, H, M, SIZE=SIZE, FLIP_X=FLIP_X
         )
 
         print(f"🎯 Gefundene Darts: {dart_hits}")
@@ -108,8 +120,11 @@ def Process_Start_Main(img, keypoints=None, out_dir="out", board_model=None, dar
         # ------------------------------------------------------------
         # 6️⃣ Rückgabe
         # ------------------------------------------------------------
-        return dart_hits, keypoints, dart_scores
+        return dart_hits, keypoints, dart_scores, {
+            "board": board_confidences,
+            "darts": dart_confidences
+        }
 
     except Exception as e:
         print(f"❌ Fehler in Process_Start_Main: {e}")
-        return [], keypoints or None, {}
+        return [], keypoints or None, {}, {"board": {}, "darts": []}
