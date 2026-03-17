@@ -1,0 +1,16 @@
+venv/
+venv_coreml/
+__pycache__/
+*.pyc
+.git/
+runs/
+out/
+uploads/
+Test/
+models/*.mlpackage
+models/Darts.pt
+models/Yolo26Darts_60.pt
+*.md
+.dockerignore
+Dockerfile
+docker-compose.yml
