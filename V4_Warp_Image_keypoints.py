@@ -3,14 +3,17 @@ from V4_SimulateBoardOnWarpedImageKey import run_simulation
 from V4_Extract_DartCenters import transform_dart_keypoints_absolute
 from V4_YOLODartKoordinates import run_yolo_on_image, run_yolo_on_image2
 
-def Process_Start_Main(img, keypoints=None, out_dir="out"):
+def Process_Start_Main(img, keypoints=None, out_dir="out", board_model=None, dart_model=None):
     """
     Stateless Verarbeitung:
+    - board_model / dart_model: Vorab geladene YOLO-Modelle (werden vom Server übergeben).
     - Wenn keine Keypoints: Board wird automatisch erkannt.
     - Wenn Keypoints vorhanden: wird direkt die Dart-Erkennung gestartet.
     Rückgabe:
         darts: Liste [(x, y), ...]
         keypoints: {top, right, bottom, left}
+        dart_scores: dict
+        detection_confidences: {board: {...}, darts: [...]}
     """
 
     try:
@@ -24,18 +27,26 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         # ------------------------------------------------------------
         # 1️⃣ KEYPOINTS prüfen
         # ------------------------------------------------------------
+        board_confidences = {}
+
         if keypoints is None or len(keypoints) < 4:
             print("⚠️ Keine gültigen Keypoints übergeben – erkenne Board mit YOLO...")
-            detected = run_yolo_on_image("/opt/dartvision/models/Board.pt", img, wert=False)
+            detected, detected_confidences = run_yolo_on_image(board_model, img, wert=False)
             if len(detected) < 4:
                 print("❌ Nicht genug Board-Keypoints erkannt.")
-                return [], None
+                return [], None, {}, {"board": {}, "darts": []}
 
             keypoints = {
                 "top": detected[0],
                 "right": detected[1],
                 "bottom": detected[2],
                 "left": detected[3]
+            }
+            board_confidences = {
+                "top": detected_confidences[0],
+                "right": detected_confidences[1],
+                "bottom": detected_confidences[2],
+                "left": detected_confidences[3]
             }
             print("🟢 Board-Keypoints neu erkannt.")
         else:
@@ -66,25 +77,33 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         H, _ = cv2.findHomography(src_pts, dst_rot)
         warped = cv2.warpPerspective(img, H, (SIZE, SIZE))
 
+        # 📁 Transformiertes Bild speichern
+        warped_path = os.path.join(out_dir, "warped_input.jpg")
+        cv2.imwrite(warped_path, warped)
+        print(f"💾 Transformiertes Bild gespeichert: {warped_path}")
+
         # ------------------------------------------------------------
         # 3️⃣ DARTS erkennen (nur wenn Board-Keypoints existieren)
         # ------------------------------------------------------------
         print("🎯 Starte Dart-Erkennung...")
         dart_hits_raw = run_yolo_on_image2(
-            "/opt/dartvision/models/Darts.pt",
+            dart_model,
             img,
             wert=False
         )
 
         if not dart_hits_raw:
             print("⚠️ Keine Darts erkannt.")
-            return [], keypoints, {}
+            return [], keypoints, {}, {"board": board_confidences, "darts": []}
+
+        dart_points_raw = [(x, y) for x, y, _ in dart_hits_raw]
+        dart_confidences = [confidence for _, _, confidence in dart_hits_raw]
 
         # ------------------------------------------------------------
         # 4️⃣ DART-Koordinaten transformieren
         # ------------------------------------------------------------
         dart_hits = transform_dart_keypoints_absolute(
-            dart_hits_raw, H, M, SIZE=SIZE, FLIP_X=FLIP_X
+            dart_points_raw, H, M, SIZE=SIZE, FLIP_X=FLIP_X
         )
 
         print(f"🎯 Gefundene Darts: {dart_hits}")
@@ -101,8 +120,11 @@ def Process_Start_Main(img, keypoints=None, out_dir="out"):
         # ------------------------------------------------------------
         # 6️⃣ Rückgabe
         # ------------------------------------------------------------
-        return dart_hits, keypoints, dart_scores
+        return dart_hits, keypoints, dart_scores, {
+            "board": board_confidences,
+            "darts": dart_confidences
+        }
 
     except Exception as e:
         print(f"❌ Fehler in Process_Start_Main: {e}")
-        return [], keypoints or None
+        return [], keypoints or None, {}, {"board": {}, "darts": []}

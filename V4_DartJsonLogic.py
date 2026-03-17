@@ -2,7 +2,10 @@ import os, json, numpy as np
 
 
 def update_dart_json(dart_hits):
-    DART_FILE = "/opt/dartvision/jsons/darts.json"
+    # Lokaler Pfad für Entwicklung, Produktion: /opt/dartvision/jsons/darts.json
+    import os
+    base_dir = os.path.dirname(__file__)
+    DART_FILE = os.path.join(base_dir, "jsons", "darts.json")
     DIST_THRESHOLD = 50  # Pixel Abstand, ab wann ein Dart als "neu" gilt
     MAX_DARTS = 3
     """

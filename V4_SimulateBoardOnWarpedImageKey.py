@@ -21,6 +21,11 @@ SECTORS = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5]
 
 # ------------------ Scoring ------------------
 def get_score(x, y, sectors):
+    """
+    Berechnet Score und Feldart für einen Dart-Treffer.
+    Rückgabe: (score, field_type)
+    field_type kann sein: "bull", "outer_bull", "triple", "double", "single", "miss"
+    """
     dx, dy = x - R, y - R
     r = math.hypot(dx, dy)  # Abstand vom Mittelpunkt
     ang = (math.degrees(math.atan2(dx, -dy)) + 360) % 360  # Winkel 0°=oben, CW
@@ -31,9 +36,9 @@ def get_score(x, y, sectors):
               f"T=[{R_TRIPLE_IN},{R_TRIPLE_OUT}]  D=[{R_DOUBLE_IN},{R_DOUBLE_OUT}]")
     # Bulls
     if r <= R_INNER_BULL:
-        return 50
+        return 50, "bull"
     if r <= R_OUTER_BULL:
-        return 25
+        return 25, "outer_bull"
 
     # passenden Sektor finden
     field = None
@@ -48,17 +53,17 @@ def get_score(x, y, sectors):
             break
 
     if field is None:
-        return 0  # sollte nicht vorkommen
+        return 0, "miss"  # sollte nicht vorkommen
 
     # Ring bestimmen
     if R_TRIPLE_IN <= r <= R_TRIPLE_OUT:
-        return field * 3
+        return field * 3, "triple"
     if R_DOUBLE_IN <= r <= R_DOUBLE_OUT:
-        return field * 2
+        return field * 2, "double"
     if r < R_DOUBLE_OUT:
-        return field
+        return field, "single"
 
-    return 0  # außerhalb
+    return 0, "miss"  # außerhalb
 def rot90_ccw(x, y, R):
     """90° gegen den Uhrzeigersinn um das Zentrum (R,R) drehen."""
     x_new = y
@@ -107,12 +112,15 @@ def run_simulation(warped_img, out_dir, test_points=None):
     # ------------------ Trefferpunkte ------------------
     if test_points:
         for name, (x, y) in test_points.items():
-            score = get_score(x, y, sectors)
-            dart_scores[name] = score  # 🔹 Nur hier speichern wir den Wert
+            score, field_type = get_score(x, y, sectors)
+            dart_scores[name] = {
+                "score": score,
+                "field_type": field_type
+            }
             cv2.circle(overlay, (int(x), int(y)), 6, (0, 0, 255), -1)
             cv2.putText(overlay, f"{score}", (int(x) + 10, int(y)),
                         font, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
-            print(f"{name:15s} -> Score = {score}")
+            print(f"{name:15s} -> Score = {score}, Field = {field_type}")
 
     # ------------------ Overlay speichern ------------------
     out_path = os.path.join(out_dir, "warped_withBoard1.jpg")
